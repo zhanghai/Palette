@@ -6,7 +6,7 @@ Workarounds problems such as large bitmap, and uses [SystemBarTint](https://gith
 
 ## Screenshot
 
-![Screenshot 1](screenshot/1.png)
+![Screenshot 1](/screenshot/1.png?raw=true)
 
 ## License
 
