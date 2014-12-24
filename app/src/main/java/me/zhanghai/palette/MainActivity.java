@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends ActionBarActivity implements Palette.PaletteAsyncListener {
+
+    private static final String KEY_IMAGE_URI = "image_uri";
 
     private static final int REQUEST_CODE_PICK_IMAGE = 0;
 
@@ -41,6 +44,8 @@ public class MainActivity extends ActionBarActivity implements Palette.PaletteAs
     private View mutedDarkView;
 
     private SystemBarTintManager systemBarTintManager;
+
+    private Uri imageUri;
 
     private Bitmap bitmap;
 
@@ -66,6 +71,23 @@ public class MainActivity extends ActionBarActivity implements Palette.PaletteAs
                 R.attr.colorPrimary)));
         systemBarTintManager.setStatusBarTintEnabled(true);
         systemBarTintManager.setNavigationBarTintEnabled(true);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putParcelable(KEY_IMAGE_URI, imageUri);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        Uri uri = savedInstanceState.getParcelable(KEY_IMAGE_URI);
+        if (uri != null) {
+            onImagePicked(uri);
+        }
     }
 
     @Override
@@ -124,6 +146,19 @@ public class MainActivity extends ActionBarActivity implements Palette.PaletteAs
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void onImagePicked(Uri uri) {
 
+        Bitmap newBitmap;
+        try {
+            newBitmap = decodeBitmapUri(uri);
+            if (newBitmap == null) {
+                Toast.makeText(this, R.string.decode_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, R.string.io_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (bitmap != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 image.setBackground(null);
@@ -133,14 +168,11 @@ public class MainActivity extends ActionBarActivity implements Palette.PaletteAs
             }
             bitmap.recycle();
         }
+        bitmap = newBitmap;
+        image.setImageBitmap(bitmap);
+        Palette.generateAsync(bitmap, this);
 
-        try {
-            bitmap = decodeBitmapUri(uri);
-            image.setImageBitmap(bitmap);
-            Palette.generateAsync(bitmap, this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        imageUri = uri;
     }
 
     @TargetApi(19)
